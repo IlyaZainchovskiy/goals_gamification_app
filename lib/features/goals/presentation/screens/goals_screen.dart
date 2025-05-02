@@ -7,6 +7,7 @@ import 'package:goals_gamification_app/features/auth/presentation/screens/bloc/a
 import 'package:goals_gamification_app/features/goals/presentation/bloc/goals_bloc.dart';
 import 'package:goals_gamification_app/features/goals/presentation/bloc/goals_event.dart';
 import 'package:goals_gamification_app/features/goals/presentation/bloc/goals_state.dart';
+import 'package:goals_gamification_app/features/goals/presentation/screens/completed_goals_screen.dart';
 import 'package:goals_gamification_app/features/goals/widgets/goal_item.dart';
 import 'package:uuid/uuid.dart';
 
@@ -24,12 +25,24 @@ class _GoalsScreenState extends State<GoalsScreen> {
     _loadGoals();
   }
 
-  void _loadGoals() {
-    final authState = context.read<AuthBloc>().state;
-    if (authState is Authenticated) {
-      context.read<GoalsBloc>().add(LoadGoals(authState.user.id));
-    }
+void _loadGoals() {
+  final authState = context.read<AuthBloc>().state;
+  if (authState is Authenticated) {
+    // Завантажуємо всі цілі
+    context.read<GoalsBloc>().add(LoadGoals(authState.user.id));
+    
+    // Після завантаження відфільтровуємо лише активні цілі
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        final goalsState = context.read<GoalsBloc>().state;
+        if (goalsState is GoalsLoaded) {
+          // Застосовуємо фільтр для відображення лише незавершених цілей
+          context.read<GoalsBloc>().add(const FilterGoalsByStatus(false));
+        }
+      }
+    });
   }
+}
 
   void _showAddGoalDialog() {
     final authState = context.read<AuthBloc>().state;
@@ -44,17 +57,28 @@ class _GoalsScreenState extends State<GoalsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Мої цілі'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              _showFilterDialog();
-            },
-          ),
-        ],
-      ),
+    appBar: AppBar(
+      title: const Text('Мої цілі'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.filter_list),
+          onPressed: () {
+            _showFilterDialog();
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.done_all),
+          tooltip: 'Завершені цілі',
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const CompletedGoalsScreen(),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is Unauthenticated) {

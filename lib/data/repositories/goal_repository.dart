@@ -1,7 +1,9 @@
 import 'package:goals_gamification_app/core/models/goal.dart';
 
 abstract class GoalRepository {
-  Future<List<Goal>> getGoalsByUser(String userId);
+  Future<List<Goal>> getGoalsByUser(String userId); 
+  Future<List<Goal>> getAllGoalsByUser(String userId); 
+  Future<List<Goal>> getCompletedGoalsByUser(String userId); 
   Future<Goal?> getGoal(String goalId);
   Future<String> createGoal(Goal goal);
   Future<void> updateGoal(Goal goal);

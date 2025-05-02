@@ -83,6 +83,4 @@ class TaskRepositoryImpl implements TaskRepository {
         .toList()
         ..sort((a, b) => a.priority.index.compareTo(b.priority.index));
   }
-
-  
 }

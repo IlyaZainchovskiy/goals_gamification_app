@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:goals_gamification_app/core/models/user.dart';
 import 'package:goals_gamification_app/core/models/goal.dart';
 import 'package:goals_gamification_app/core/models/task.dart';
-import 'package:goals_gamification_app/core/models/achievement.dart';
+// import 'package:goals_gamification_app/core/models/achievement.dart';
 
 class FirebaseDatasource {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -129,16 +129,23 @@ class FirebaseDatasource {
   }
 
   Future<String> createTask(Task task) async {
-    try {
-      print('Спроба створити завдання в Firebase: ${task.title}');
+  try {
+    print('Спроба створити завдання в Firebase: ${task.title}');
+    
+    if (task.id.isEmpty) {
       final docRef = await _firestore.collection('tasks').add(task.toJson());
-      print('Завдання успішно створено з ID: ${docRef.id}');
+      print('Завдання  створено з ID: ${docRef.id}');
       return docRef.id;
-    } catch (e) {
-      print('Помилка при створенні завдання в Firebase: $e');
-      throw e;
+    } else {
+      await _firestore.collection('tasks').doc(task.id).set(task.toJson());
+      print('Завдання  створено з наданим ID: ${task.id}');
+      return task.id;
     }
+  } catch (e) {
+    print('Помилка при створенні завдання в Firebase: $e');
+    throw e;
   }
+}
 
   Future<void> updateTask(Task task) async {
     try {

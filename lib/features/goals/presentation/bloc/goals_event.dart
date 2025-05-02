@@ -8,6 +8,15 @@ abstract class GoalsEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class FilterGoalsByStatus extends GoalsEvent {
+  final bool? isCompleted;
+
+  const FilterGoalsByStatus(this.isCompleted);
+
+  @override
+  List<Object?> get props => [isCompleted];
+}
+
 class LoadGoals extends GoalsEvent {
   final String userId;
 

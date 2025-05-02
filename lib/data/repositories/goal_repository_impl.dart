@@ -9,8 +9,23 @@ class GoalRepositoryImpl implements GoalRepository {
 
   @override
   Future<List<Goal>> getGoalsByUser(String userId) async {
+    final goals = await _datasource.getGoalsByUser(userId);
+    
+    return goals.where((goal) => !goal.isCompleted).toList();
+  }
+
+  @override
+  Future<List<Goal>> getAllGoalsByUser(String userId) async {
     return await _datasource.getGoalsByUser(userId);
   }
+
+  @override
+  Future<List<Goal>> getCompletedGoalsByUser(String userId) async {
+    final goals = await _datasource.getGoalsByUser(userId);
+    return goals.where((goal) => goal.isCompleted).toList();
+  }
+
+
 
   @override
   Future<Goal?> getGoal(String goalId) async {
@@ -54,14 +69,12 @@ class GoalRepositoryImpl implements GoalRepository {
     final goals = await _datasource.getGoalsByUser(userId);
     final now = DateTime.now();
     
-    // Фільтрація цілі, які ще не виконані та мають дедлайн у майбутньому
     return goals
         .where((goal) => 
             !goal.isCompleted && 
             goal.deadline != null && 
             goal.deadline!.isAfter(now))
         .toList()
-        // Сортація за дедлайном (найближчі спочатку)
         ..sort((a, b) => a.deadline!.compareTo(b.deadline!));
   }
 }

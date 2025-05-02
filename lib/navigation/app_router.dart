@@ -4,6 +4,7 @@ import 'package:goals_gamification_app/features/auth/presentation/screens/welcom
 import 'package:goals_gamification_app/features/auth/presentation/screens/login_screen.dart';
 import 'package:goals_gamification_app/features/auth/presentation/screens/register_screen.dart';
 import 'package:goals_gamification_app/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:goals_gamification_app/features/goals/presentation/screens/completed_goals_screen.dart';
 import 'package:goals_gamification_app/features/goals/presentation/screens/goals_screen.dart';
 import 'package:goals_gamification_app/features/tasks/presentation/screens/tasks_screen.dart';
 import 'package:goals_gamification_app/features/profile/presentation/screens/profile_screen.dart';
@@ -46,6 +47,11 @@ class AppRouter {
         path: '/profile',
         builder: (BuildContext context, GoRouterState state) => 
             const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/completed-goals',
+        builder: (BuildContext context, GoRouterState state) => 
+            const CompletedGoalsScreen(),
       ),
     ],
   );

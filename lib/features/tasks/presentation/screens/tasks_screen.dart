@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:goals_gamification_app/core/models/goal.dart';
 import 'package:goals_gamification_app/core/models/task.dart';
+import 'package:goals_gamification_app/data/repositories/goal_repository.dart';
 import 'package:goals_gamification_app/features/auth/presentation/screens/bloc/auth_bloc.dart';
 import 'package:goals_gamification_app/features/auth/presentation/screens/bloc/auth_state.dart';
+import 'package:goals_gamification_app/features/goals/presentation/screens/goals_screen.dart';
 import 'package:goals_gamification_app/features/tasks/presentation/bloc/tasks_bloc.dart';
 import 'package:goals_gamification_app/features/tasks/presentation/bloc/tasks_event.dart';
 import 'package:goals_gamification_app/features/tasks/presentation/bloc/tasks_state.dart';
 import 'package:goals_gamification_app/features/tasks/widgets/task_item.dart';
-import 'package:uuid/uuid.dart';
+// import 'package:uuid/uuid.dart';
 
 class TasksScreen extends StatefulWidget {
   final String? goalId;
@@ -32,7 +35,7 @@ class _TasksScreenState extends State<TasksScreen> {
   void _loadTasks() {
     final authState = context.read<AuthBloc>().state;
     if (authState is Authenticated) {
-      print('Loading tasks for user: ${authState.user.id}'); // 02.05 - 23:25
+      print('Loading tasks for user: ${authState.user.id}'); 
       context.read<TasksBloc>().add(
             LoadTasks(authState.user.id, goalId: widget.goalId),
           );
@@ -41,18 +44,20 @@ class _TasksScreenState extends State<TasksScreen> {
 
 void _showAddTaskDialog() {
   final authState = context.read<AuthBloc>().state;
-  final tasksState = context.read<TasksBloc>().state;
   
-  if (authState is Authenticated && tasksState is TasksLoaded) {
+  if (authState is Authenticated) {
+    // Передаємо порожній рядок як goalId, щоб показати вибір цілі у діалозі
     showDialog(
       context: context,
       builder: (_) => AddTaskDialog(
         userId: authState.user.id,
-        goalId: widget.goalId ?? (tasksState.relatedGoal?.id ?? ''),
+        goalId: widget.goalId ?? '', // Може бути null, тоді порожній рядок
       ),
     ).then((_) {
-      print('Діалог закрито, перезавантажуємо завдання');
-      _loadTasks();
+      // Даємо Firebase час на оновлення
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _loadTasks();
+      });
     });
   }
 }
@@ -351,7 +356,7 @@ void _showAddTaskDialog() {
 
 class AddTaskDialog extends StatefulWidget {
   final String userId;
-  final String goalId;
+  final String goalId; // Може бути порожнім, тоді потрібен вибір
   final Task? taskToEdit;
 
   const AddTaskDialog({
@@ -373,10 +378,17 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   DateTime? _deadline;
   TimeOfDay? _deadlineTime;
   TaskPriority _priority = TaskPriority.medium;
+  
+  // Додаємо змінні для вибору цілі
+  String _selectedGoalId = '';
+  List<Goal> _availableGoals = [];
+  bool _isLoadingGoals = true;
 
   @override
   void initState() {
     super.initState();
+    _selectedGoalId = widget.goalId; // Початкове значення
+    
     if (widget.taskToEdit != null) {
       _titleController.text = widget.taskToEdit!.title;
       _descriptionController.text = widget.taskToEdit!.description;
@@ -390,6 +402,61 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       }
       
       _priority = widget.taskToEdit!.priority;
+      _selectedGoalId = widget.taskToEdit!.goalId;
+    }
+    
+    // Завантажуємо цілі користувача
+    _loadUserGoals();
+  }
+  // Метод для швидкого додавання цілі
+void _showAddGoalDialog() {
+  Navigator.of(context).pop(); // Закриваємо поточний діалог
+  
+  // Відкриваємо діалог створення цілі (потрібно імпортувати клас AddGoalDialog)
+  showDialog(
+    context: context,
+    builder: (context) => AddGoalDialog(userId: widget.userId),
+  ).then((_) {
+    // Після створення цілі, знову відкриваємо діалог додавання завдання
+    Future.delayed(const Duration(milliseconds: 300), () {
+      showDialog(
+        context: context,
+        builder: (_) => AddTaskDialog(
+          userId: widget.userId,
+          goalId: '',
+        ),
+      );
+    });
+  });
+}
+
+  // Метод для завантаження цілей користувача
+  Future<void> _loadUserGoals() async {
+    setState(() {
+      _isLoadingGoals = true;
+    });
+    
+    try {
+      final goalRepository = context.read<GoalRepository>();
+      final goals = await goalRepository.getGoalsByUser(widget.userId);
+      
+      setState(() {
+        _availableGoals = goals;
+        // Якщо не вибрано ціль і є доступні, вибираємо першу
+        if (_selectedGoalId.isEmpty && goals.isNotEmpty) {
+          _selectedGoalId = goals.first.id;
+        }
+        _isLoadingGoals = false;
+      });
+    } catch (e) {
+      print('Помилка при завантаженні цілей: $e');
+      setState(() {
+        _isLoadingGoals = false;
+      });
+      // Показуємо помилку
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не вдалося завантажити цілі: $e')),
+      );
     }
   }
 
@@ -412,11 +479,71 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Вибір цілі
+              if (_isLoadingGoals)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else if (_availableGoals.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'У вас немає жодної цілі. Створіть ціль, щоб додати завдання.',
+                        style: TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: _showAddGoalDialog,
+                        child: const Text('Створити ціль'),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(
+                    labelText: 'Ціль',
+                    border: OutlineInputBorder(),
+                  ),
+                  value: _selectedGoalId.isNotEmpty && _availableGoals.any((g) => g.id == _selectedGoalId) 
+                      ? _selectedGoalId : null,
+                  items: _availableGoals.map((goal) {
+                    return DropdownMenuItem<String>(
+                      value: goal.id,
+                      child: Text(
+                        goal.title,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedGoalId = value;
+                      });
+                    }
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Виберіть ціль для завдання';
+                    }
+                    return null;
+                  },
+                ),
+              
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
                   labelText: 'Назва завдання',
                   hintText: 'Введіть назву завдання',
+                  border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -431,6 +558,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 decoration: const InputDecoration(
                   labelText: 'Опис',
                   hintText: 'Опишіть ваше завдання',
+                  border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
               ),
@@ -536,7 +664,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
           child: const Text('Скасувати'),
         ),
         ElevatedButton(
-          onPressed: _saveTask,
+          onPressed: _availableGoals.isEmpty ? null : _saveTask,
           child: Text(isEditing ? 'Зберегти' : 'Додати'),
         ),
       ],
@@ -565,66 +693,73 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     }
   }
 
-Future<void> _saveTask() async {
-  if (_formKey.currentState?.validate() ?? false) {
-    try {
-      final title = _titleController.text.trim();
-      final description = _descriptionController.text.trim();
-      
-      // Combine date and time
-      DateTime? finalDeadline;
-      if (_deadline != null) {
-        if (_deadlineTime != null) {
-          finalDeadline = DateTime(
-            _deadline!.year,
-            _deadline!.month,
-            _deadline!.day,
-            _deadlineTime!.hour,
-            _deadlineTime!.minute,
+  Future<void> _saveTask() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      try {
+        final title = _titleController.text.trim();
+        final description = _descriptionController.text.trim();
+        
+        // Перевірка вибраної цілі
+        if (_selectedGoalId.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Виберіть ціль для завдання')),
           );
-        } else {
-          finalDeadline = _deadline;
+          return;
         }
-      }
-      
-      if (widget.taskToEdit == null) {
-        // Add new task
-        final task = Task(
-          id: const Uuid().v4(),
-          userId: widget.userId,
-          goalId: widget.goalId,
-          title: title,
-          description: description,
-          createdAt: DateTime.now(),
-          deadline: finalDeadline,
-          priority: _priority,
-          isCompleted: false,
-        );
         
-        print('Додавання нового завдання: ${task.title}');
-        context.read<TasksBloc>().add(AddTask(task));
-        print('Завдання додано до блоку');
-      } else {
-        // Update existing task
-        final updatedTask = widget.taskToEdit!.copyWith(
-          title: title,
-          description: description,
-          deadline: finalDeadline,
-          priority: _priority,
-        );
+        // Combine date and time
+        DateTime? finalDeadline;
+        if (_deadline != null) {
+          if (_deadlineTime != null) {
+            finalDeadline = DateTime(
+              _deadline!.year,
+              _deadline!.month,
+              _deadline!.day,
+              _deadlineTime!.hour,
+              _deadlineTime!.minute,
+            );
+          } else {
+            finalDeadline = _deadline;
+          }
+        }
         
-        print('Оновлення завдання: ${updatedTask.title}');
-        context.read<TasksBloc>().add(UpdateTask(updatedTask));
+        if (widget.taskToEdit == null) {
+          // Add new task
+          final task = Task(
+            id: '', // порожній ID, Firebase згенерує його
+            userId: widget.userId,
+            goalId: _selectedGoalId,
+            title: title,
+            description: description,
+            createdAt: DateTime.now(),
+            deadline: finalDeadline,
+            priority: _priority,
+            isCompleted: false,
+          );
+          
+          print('Додавання нового завдання: ${task.title} до цілі: $_selectedGoalId');
+          context.read<TasksBloc>().add(AddTask(task));
+        } else {
+          // Update existing task
+          final updatedTask = widget.taskToEdit!.copyWith(
+            title: title,
+            description: description,
+            deadline: finalDeadline,
+            priority: _priority,
+            goalId: _selectedGoalId,
+          );
+          
+          print('Оновлення завдання: ${updatedTask.title}');
+          context.read<TasksBloc>().add(UpdateTask(updatedTask));
+        }
+        
+        Navigator.of(context).pop();
+      } catch (e) {
+        print('Помилка при збереженні завдання: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Помилка: $e')),
+        );
       }
-      
-      Navigator.of(context).pop();
-    } catch (e) {
-      print('Помилка при збереженні завдання: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Помилка: $e')),
-      );
     }
   }
-}
-
 }

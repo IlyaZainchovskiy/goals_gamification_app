@@ -63,25 +63,24 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final currentState = state;
   if (currentState is TasksLoaded) {
     try {
+      // Отримуємо ID від Firebase
       final taskId = await _taskRepository.createTask(event.task);
       
-      // Отримвння створене завдання з ID
+      // Створюємо нове завдання з правильним ID
       final newTask = event.task.copyWith(id: taskId);
       
-      // Оновлення локальний список завдань
+      // Оновлюємо список завдань
       final updatedAllTasks = List<Task>.from(currentState.allTasks)..add(newTask);
-      print('All tasks count: ${updatedAllTasks.length}');
-      // Застосовання  фільтр
+      
+      // Застосовуємо фільтр
       List<Task> updatedFilteredTasks = updatedAllTasks;
       if (currentState.filterIsCompleted != null) {
         updatedFilteredTasks = updatedAllTasks
             .where((task) => task.isCompleted == currentState.filterIsCompleted)
             .toList();
-      } else {
-        updatedFilteredTasks = updatedAllTasks;
       }
       
-      // Оновлення стану
+      // Оновлюємо стан
       emit(TasksLoaded(
         allTasks: updatedAllTasks,
         filteredTasks: updatedFilteredTasks,
@@ -89,9 +88,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
         filterIsCompleted: currentState.filterIsCompleted,
       ));
       
-      // Додавання XP за створення завдання
+      // Додаємо XP за створення завдання
       await _userRepository.addXp(event.task.userId, 2);
     } catch (e) {
+      print('Помилка при додаванні завдання: $e');
       emit(TasksError(e.toString()));
     }
   }

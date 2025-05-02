@@ -17,6 +17,7 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
     on<DeleteGoal>(_onDeleteGoal);
     on<CompleteGoal>(_onCompleteGoal);
     on<FilterGoalsByCategory>(_onFilterGoalsByCategory);
+    on<FilterGoalsByStatus>(_onFilterGoalsByStatus);
   }
 
   Future<void> _onLoadGoals(
@@ -119,43 +120,93 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
     }
   }
 
-  Future<void> _onCompleteGoal(
-    CompleteGoal event,
-    Emitter<GoalsState> emit,
-  ) async {
-    final currentState = state;
-    if (currentState is GoalsLoaded) {
-      try {
-        await _goalRepository.completeGoal(event.goalId);
-        
-        final goalIndex = currentState.allGoals
-            .indexWhere((goal) => goal.id == event.goalId);
+Future<void> _onCompleteGoal(
+  CompleteGoal event,
+  Emitter<GoalsState> emit,
+) async {
+  final currentState = state;
+  if (currentState is GoalsLoaded) {
+    try {
+      await _goalRepository.completeGoal(event.goalId);
+      
+      final goalIndex = currentState.allGoals
+          .indexWhere((goal) => goal.id == event.goalId);
+          
+      if (goalIndex != -1) {
+        final updatedGoal = currentState.allGoals[goalIndex]
+            .copyWith(isCompleted: true, progress: 100);
             
-        if (goalIndex != -1) {
-          final updatedGoal = currentState.allGoals[goalIndex]
-              .copyWith(isCompleted: true, progress: 100);
-              
-          final updatedGoals = List<Goal>.from(currentState.allGoals);
-          updatedGoals[goalIndex] = updatedGoal;
-          
-          List<Goal> filteredGoals = updatedGoals;
-          if (currentState.selectedCategory != null) {
-            filteredGoals = updatedGoals
-                .where((goal) => goal.category == currentState.selectedCategory)
-                .toList();
-          }
-          
-          emit(GoalsLoaded(
-            allGoals: updatedGoals,
-            filteredGoals: filteredGoals,
-            selectedCategory: currentState.selectedCategory,
-          ));
+        final updatedGoals = List<Goal>.from(currentState.allGoals);
+        updatedGoals[goalIndex] = updatedGoal;
+        
+        List<Goal> filteredGoals = updatedGoals;
+        if (currentState.filterIsCompleted != null) {
+          filteredGoals = updatedGoals
+              .where((goal) => goal.isCompleted == currentState.filterIsCompleted)
+              .toList();
         }
-      } catch (e) {
-        emit(GoalsError(e.toString()));
+        
+        if (currentState.selectedCategory != null) {
+          filteredGoals = filteredGoals
+              .where((goal) => goal.category == currentState.selectedCategory)
+              .toList();
+        }
+        
+        emit(GoalsLoaded(
+          allGoals: updatedGoals,
+          filteredGoals: filteredGoals,
+          selectedCategory: currentState.selectedCategory,
+          filterIsCompleted: currentState.filterIsCompleted,
+        ));
+        
+        // додати XP користувачу за виконання цілі
+        //  20 XP за кожну завершену ціль
+        // await _userRepository.addXp(userId, 20);
       }
+    } catch (e) {
+      emit(GoalsError(e.toString()));
     }
   }
+}
+  void _onFilterGoalsByStatus(
+  FilterGoalsByStatus event,
+  Emitter<GoalsState> emit,
+) {
+  final currentState = state;
+  if (currentState is GoalsLoaded) {
+    if (event.isCompleted == null) {
+      List<Goal> filteredGoals = currentState.allGoals;
+      if (currentState.selectedCategory != null) {
+        filteredGoals = filteredGoals
+            .where((goal) => goal.category == currentState.selectedCategory)
+            .toList();
+      }
+      
+      emit(GoalsLoaded(
+        allGoals: currentState.allGoals,
+        filteredGoals: filteredGoals,
+        selectedCategory: currentState.selectedCategory,
+        filterIsCompleted: null,
+      ));
+    } else {
+      List<Goal> filteredGoals = currentState.allGoals
+          .where((goal) => goal.isCompleted == event.isCompleted)
+          .toList();
+      if (currentState.selectedCategory != null) {
+        filteredGoals = filteredGoals
+            .where((goal) => goal.category == currentState.selectedCategory)
+            .toList();
+      }
+      
+      emit(GoalsLoaded(
+        allGoals: currentState.allGoals,
+        filteredGoals: filteredGoals,
+        selectedCategory: currentState.selectedCategory,
+        filterIsCompleted: event.isCompleted,
+      ));
+    }
+  }
+}
 
   void _onFilterGoalsByCategory(
     FilterGoalsByCategory event,
@@ -164,14 +215,12 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
     final currentState = state;
     if (currentState is GoalsLoaded) {
       if (event.category == null) {
-        // No filter, show all goals
         emit(GoalsLoaded(
           allGoals: currentState.allGoals,
           filteredGoals: currentState.allGoals,
           selectedCategory: null,
         ));
       } else {
-        // Filter by category
         final filteredGoals = currentState.allGoals
             .where((goal) => goal.category == event.category)
             .toList();

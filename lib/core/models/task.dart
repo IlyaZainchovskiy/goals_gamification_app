@@ -19,7 +19,7 @@ class Task {
   final TaskPriority priority;
   
   Task({
-    required this.id,
+    required this.id, 
     required this.userId,
     required this.goalId,
     required this.title,
