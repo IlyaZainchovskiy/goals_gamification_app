@@ -20,18 +20,18 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
     on<FilterGoalsByStatus>(_onFilterGoalsByStatus);
   }
 
-  Future<void> _onLoadGoals(
-    LoadGoals event,
-    Emitter<GoalsState> emit,
-  ) async {
-    emit(GoalsLoading());
-    try {
-      final goals = await _goalRepository.getGoalsByUser(event.userId);
-      emit(GoalsLoaded(allGoals: goals, filteredGoals: goals));
-    } catch (e) {
-      emit(GoalsError(e.toString()));
-    }
+Future<void> _onLoadGoals(
+  LoadGoals event,
+  Emitter<GoalsState> emit,
+) async {
+  emit(GoalsLoading());
+  try {
+    final goals = await _goalRepository.getAllGoalsByUser(event.userId);
+    emit(GoalsLoaded(allGoals: goals, filteredGoals: goals));
+  } catch (e) {
+    emit(GoalsError(e.toString()));
   }
+}
 
   Future<void> _onAddGoal(
     AddGoal event,

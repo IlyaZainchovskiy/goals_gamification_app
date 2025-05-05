@@ -22,16 +22,18 @@ class _CompletedGoalsScreenState extends State<CompletedGoalsScreen> {
     _loadCompletedGoals();
   }
 
-  void _loadCompletedGoals() {
-    final authState = context.read<AuthBloc>().state;
-    if (authState is Authenticated) {
-      // Завантажуємо всі цілі
-      context.read<GoalsBloc>().add(LoadGoals(authState.user.id));
-      
-      // Відфільтровуємо тільки завершені
-      context.read<GoalsBloc>().add(const FilterGoalsByStatus(true));
-    }
+void _loadCompletedGoals() {
+  final authState = context.read<AuthBloc>().state;
+  if (authState is Authenticated) {
+    context.read<GoalsBloc>().add(LoadGoals(authState.user.id));
+    
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        context.read<GoalsBloc>().add(const FilterGoalsByStatus(true));
+      }
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +44,7 @@ class _CompletedGoalsScreenState extends State<CompletedGoalsScreen> {
       body: BlocBuilder<GoalsBloc, GoalsState>(
         builder: (context, state) {
           if (state is GoalsLoading) {
+            
             return const Center(child: CircularProgressIndicator());
           } else if (state is GoalsLoaded) {
             return RefreshIndicator(
@@ -72,7 +75,6 @@ class _CompletedGoalsScreenState extends State<CompletedGoalsScreen> {
                         return GoalItem(
                           goal: goal,
                           onTap: () {
-                            // Переглянути деталі цілі
                           },
                           onDelete: () {
                             _showDeleteConfirmation(goal);

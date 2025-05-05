@@ -63,16 +63,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final currentState = state;
   if (currentState is TasksLoaded) {
     try {
-      // Отримуємо ID від Firebase
       final taskId = await _taskRepository.createTask(event.task);
       
-      // Створюємо нове завдання з правильним ID
       final newTask = event.task.copyWith(id: taskId);
       
-      // Оновлюємо список завдань
       final updatedAllTasks = List<Task>.from(currentState.allTasks)..add(newTask);
       
-      // Застосовуємо фільтр
       List<Task> updatedFilteredTasks = updatedAllTasks;
       if (currentState.filterIsCompleted != null) {
         updatedFilteredTasks = updatedAllTasks
@@ -80,7 +76,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
             .toList();
       }
       
-      // Оновлюємо стан
       emit(TasksLoaded(
         allTasks: updatedAllTasks,
         filteredTasks: updatedFilteredTasks,
@@ -106,7 +101,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       try {
         await _taskRepository.updateTask(event.task);
         
-        // Update in-memory list
         final taskIndex = currentState.allTasks.indexWhere((t) => t.id == event.task.id);
         if (taskIndex != -1) {
           final updatedTasks = List<Task>.from(currentState.allTasks);
@@ -140,7 +134,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       try {
         await _taskRepository.deleteTask(event.taskId);
         
-        // Update in-memory list
         final updatedTasks = currentState.allTasks.where((t) => t.id != event.taskId).toList();
         
         List<Task> filteredTasks = updatedTasks;
@@ -168,13 +161,10 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     final currentState = state;
     if (currentState is TasksLoaded) {
       try {
-        // Get the task before completion
         final task = currentState.allTasks.firstWhere((t) => t.id == event.taskId);
         
-        // Complete the task
         await _taskRepository.completeTask(event.taskId);
         
-        // Update in-memory list
         final taskIndex = currentState.allTasks.indexWhere((t) => t.id == event.taskId);
         if (taskIndex != -1) {
           final updatedTasks = List<Task>.from(currentState.allTasks);

@@ -43,6 +43,6 @@ class UserRepositoryImpl implements UserRepository {
   
   // алгоритм для розрахунку рівня на основі XP
   int calculateLevel(int xp) {
-    return (xp / 100).floor() + 1; // Кожні 100 XP - новий рівень
+    return (xp / 100).floor() + 1; 
   }
 }
