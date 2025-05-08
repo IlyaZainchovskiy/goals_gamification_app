@@ -180,14 +180,42 @@ class FirebaseDatasource {
     }
   }
 
-  Future<void> addAchievementToUser(String userId, String achievementId) async {
-    try {
+Future<void> addAchievementToUser(String userId, String achievementId) async {
+  try {
+    print("Firebase: додаємо досягнення $achievementId користувачу $userId");
+    
+    // Спочатку отримуємо поточний список досягнень
+    final docSnapshot = await _firestore.collection('users').doc(userId).get();
+    
+    if (docSnapshot.exists) {
+      List<String> currentAchievements = [];
+      
+      if (docSnapshot.data()!.containsKey('achievements')) {
+        currentAchievements = List<String>.from(docSnapshot.data()!['achievements']);
+      }
+      
+      // Перевірка, чи вже є це досягнення
+      if (currentAchievements.contains(achievementId)) {
+        print("Firebase: досягнення вже існує у списку");
+        return;
+      }
+      
+      // Додаємо нове досягнення
+      currentAchievements.add(achievementId);
+      
+      // Оновлюємо документ з новим списком замість використання arrayUnion
       await _firestore.collection('users').doc(userId).update({
-        'achievements': FieldValue.arrayUnion([achievementId])
+        'achievements': currentAchievements
       });
-    } catch (e) {
-      print('Error adding achievement to user: $e');
-      throw e;
+      
+      print("Firebase: досягнення успішно додано");
+    } else {
+      print("Firebase: документ користувача не знайдено");
+      throw Exception("Користувача не знайдено");
     }
+  } catch (e) {
+    print("Firebase: помилка при додаванні досягнення: $e");
+    throw e;
   }
+}
 }

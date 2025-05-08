@@ -156,16 +156,22 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-  Future<void> _onCompleteTask(
+ Future<void> _onCompleteTask(
   CompleteTask event,
   Emitter<TasksState> emit,
 ) async {
   final currentState = state;
   if (currentState is TasksLoaded) {
     try {
-      final task = currentState.allTasks.firstWhere((t) => t.id == event.taskId);
+      print("Виконання завдання з ID: ${event.taskId}");
+      
+      final task = currentState.allTasks.firstWhere(
+        (t) => t.id == event.taskId,
+        orElse: () => throw Exception('Завдання не знайдено'),
+      );
       
       await _taskRepository.completeTask(event.taskId);
+      print("Завдання позначено як виконане в репозиторії");
       
       final taskIndex = currentState.allTasks.indexWhere((t) => t.id == event.taskId);
       if (taskIndex != -1) {
@@ -185,17 +191,23 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           filterIsCompleted: currentState.filterIsCompleted,
         ));
         
+        print("Додаємо XP користувачу ${task.userId}");
         await _userRepository.addXp(task.userId, 5, context: event.context);
         
-        // Перевірка досягнення з передачею контексту
-        if (event.context != null) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        if (event.context != null && event.context!.mounted) {
+          print("Перевіряємо досягнення для користувача ${task.userId}");
           await _achievementRepository.checkAndAwardAchievements(
             task.userId, 
             event.context!,
           );
+        } else {
+          print("Контекст відсутній або невалідний, пропускаємо перевірку досягнень");
         }
       }
     } catch (e) {
+      print("Помилка при виконанні завдання: $e");
       emit(TasksError(e.toString()));
     }
   }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:goals_gamification_app/core/models/achievement.dart';
-import 'package:goals_gamification_app/features/gamification/widgets/achivment_dialog.dart';
+import 'package:goals_gamification_app/features/gamification/widgets/achievement_dialog.dart';
 
 class NotificationService {
   static void showAchievementNotification(

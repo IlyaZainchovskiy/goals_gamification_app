@@ -123,7 +123,7 @@ void _showAddTaskDialog() {
                             },
                             onCheckboxChanged: (isChecked) {
                               if (isChecked && !task.isCompleted) {
-                                context.read<TasksBloc>().add(CompleteTask(task.id,));
+                                context.read<TasksBloc>().add(CompleteTask(task.id, context: context));
                               } else if (!isChecked && task.isCompleted) {
                                 // Uncomplete task
                                 final updatedTask = task.copyWith(isCompleted: false);
@@ -310,7 +310,7 @@ void _showAddTaskDialog() {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                context.read<TasksBloc>().add(CompleteTask(task.id));
+                context.read<TasksBloc>().add(CompleteTask(task.id, context: context));
               },
               child: const Text('Завершити'),
             ),

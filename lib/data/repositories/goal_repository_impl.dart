@@ -1,11 +1,16 @@
+import 'package:flutter/material.dart';
+import 'package:goals_gamification_app/core/models/achievement.dart';
 import 'package:goals_gamification_app/core/models/goal.dart';
+import 'package:goals_gamification_app/core/services/notification_service.dart';
 import 'package:goals_gamification_app/data/datasources/firebase_datasource.dart';
 import 'package:goals_gamification_app/data/repositories/goal_repository.dart';
+import 'package:goals_gamification_app/data/repositories/user_repository.dart';
 
 class GoalRepositoryImpl implements GoalRepository {
   final FirebaseDatasource _datasource;
+  final UserRepository _userRepository;
 
-  GoalRepositoryImpl(this._datasource);
+  GoalRepositoryImpl(this._datasource, this._userRepository);
 
   @override
   Future<List<Goal>> getGoalsByUser(String userId) async {
@@ -13,6 +18,76 @@ class GoalRepositoryImpl implements GoalRepository {
     
     return goals.where((goal) => !goal.isCompleted).toList();
   }
+  @override
+  Future<void> checkAndAwardAchievements(String userId, BuildContext context) async {
+  final user = await _datasource.getUser(userId);
+  if (user == null) return;
+  
+  final userAchievements = await _datasource.getUserAchievements(userId);
+  
+  // Отримання ВСІХ цілей користувача, включно з завершеними
+  final goals = await _datasource.getGoalsByUser(userId);
+  int taskCount = 0;
+  int todayTaskCount = 0;
+  
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  
+  // Підрахунок завдань
+  for (final goal in goals) {
+    final tasks = await _datasource.getTasksByGoal(goal.id);
+    taskCount += tasks.where((task) => task.isCompleted).length;
+    
+    todayTaskCount += tasks.where((task) => 
+      task.isCompleted && 
+      DateTime(task.createdAt.year, task.createdAt.month, task.createdAt.day)
+          .isAtSameMomentAs(today)
+    ).length;
+  }
+  
+  // Додати логування для відлагодження
+  print('Загальна кількість виконаних завдань: $taskCount');
+  print('Кількість виконаних завдань сьогодні: $todayTaskCount');
+  
+  // Перевірка досягнень
+  for (final achievement in Achievement.predefinedAchievements) {
+    if (!userAchievements.contains(achievement.id)) {
+      bool awarded = false;
+      
+      switch (achievement.type) {
+        case AchievementType.completeTasks:
+          print('Перевірка досягнення "${achievement.title}": поріг=${achievement.threshold}, поточний=$taskCount');
+          if (taskCount >= achievement.threshold) {
+            awarded = true;
+          }
+          break;
+        case AchievementType.createGoals:
+          if (goals.length >= achievement.threshold) {
+            awarded = true;
+          }
+          break;
+        case AchievementType.dailyStreak:
+          if (todayTaskCount >= achievement.threshold) {
+            awarded = true;
+          }
+          break;
+        default:
+          break;
+      }
+      
+      if (awarded) {
+        print('Отримано досягнення: ${achievement.title}');
+        await _userRepository.addAchievement(userId, achievement.id);
+        await _userRepository.addXp(userId, achievement.xpReward);
+        
+        // Відображаємо сповіщення
+        if (context.mounted) {
+          NotificationService.showAchievementNotification(context, achievement);
+        }
+      }
+    }
+  }
+}
 
   @override
   Future<List<Goal>> getAllGoalsByUser(String userId) async {

@@ -48,6 +48,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider<GoalRepository>(
           create: (context) => GoalRepositoryImpl(
             context.read<FirebaseDatasource>(),
+             context.read<UserRepository>(),
           ),
         ),
         RepositoryProvider<TaskRepository>(
@@ -91,6 +92,7 @@ class MyApp extends StatelessWidget {
           ),
           BlocProvider<TasksBloc>(
             create: (context) => TasksBloc(
+              context.read<AchievementRepository>(), 
               taskRepository: context.read<TaskRepository>(),
               goalRepository: context.read<GoalRepository>(),
               userRepository: context.read<UserRepository>(),

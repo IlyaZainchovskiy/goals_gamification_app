@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:goals_gamification_app/core/models/goal.dart';
 
 abstract class GoalRepository {
+  Future<void> checkAndAwardAchievements(String userId, BuildContext context);
   Future<List<Goal>> getGoalsByUser(String userId); 
   Future<List<Goal>> getAllGoalsByUser(String userId); 
   Future<List<Goal>> getCompletedGoalsByUser(String userId); 

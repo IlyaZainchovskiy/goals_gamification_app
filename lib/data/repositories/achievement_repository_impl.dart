@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:goals_gamification_app/core/models/achievement.dart';
+import 'package:goals_gamification_app/core/models/task.dart';
 import 'package:goals_gamification_app/core/services/notification_service.dart';
 import 'package:goals_gamification_app/data/datasources/firebase_datasource.dart';
 import 'package:goals_gamification_app/data/repositories/achievement_repository.dart';
@@ -22,49 +23,67 @@ class AchievementRepositoryImpl implements AchievementRepository {
   }
 
   @override
-  Future<void> checkAndAwardAchievements(String userId, BuildContext context) async {
+Future<void> checkAndAwardAchievements(String userId, BuildContext context) async {
+  try {
+    print("Перевірка досягнень для користувача: $userId");
+    
     final user = await _datasource.getUser(userId);
-    if (user == null) return;
+    if (user == null) {
+      print("Користувача не знайдено");
+      return;
+    }
     
     final userAchievements = await _datasource.getUserAchievements(userId);
+    print("Поточні досягнення користувача: $userAchievements");
     
-    // Отримання всіх завдання користувача
     final goals = await _datasource.getGoalsByUser(userId);
-    int taskCount = 0;
+    print("Знайдено ${goals.length} цілей");
+    
+    int completedTaskCount = 0;
     int todayTaskCount = 0;
     
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     
-    // Підрахунок кількість завдань і завдань сьогодні
+    List<Task> allTasks = [];
     for (final goal in goals) {
       final tasks = await _datasource.getTasksByGoal(goal.id);
-      taskCount += tasks.where((task) => task.isCompleted).length;
-      
-      todayTaskCount += tasks.where((task) => 
-        task.isCompleted && 
-        DateTime(task.createdAt.year, task.createdAt.month, task.createdAt.day)
-            .isAtSameMomentAs(today)
-      ).length;
+      allTasks.addAll(tasks);
     }
     
-    // Перевірка досягнення
+    completedTaskCount = allTasks.where((task) => task.isCompleted).length;
+    
+    todayTaskCount = allTasks.where((task) => 
+      task.isCompleted && 
+      DateTime(task.createdAt.year, task.createdAt.month, task.createdAt.day)
+          .isAtSameMomentAs(today)
+    ).length;
+    
+    print("Завершених завдань всього: $completedTaskCount");
+    print("Завершених завдань сьогодні: $todayTaskCount");
+    
+    // Перевірка досягнень
     for (final achievement in Achievement.predefinedAchievements) {
       if (!userAchievements.contains(achievement.id)) {
         bool awarded = false;
         
+        print("Перевірка досягнення: ${achievement.title} (${achievement.id}), тип: ${achievement.type}");
+        
         switch (achievement.type) {
           case AchievementType.completeTasks:
-            if (taskCount >= achievement.threshold) {
+            print("  Порівнюємо $completedTaskCount >= ${achievement.threshold}");
+            if (completedTaskCount >= achievement.threshold) {
               awarded = true;
             }
             break;
           case AchievementType.createGoals:
+            print("  Порівнюємо ${goals.length} >= ${achievement.threshold}");
             if (goals.length >= achievement.threshold) {
               awarded = true;
             }
             break;
           case AchievementType.dailyStreak:
+            print("  Порівнюємо $todayTaskCount >= ${achievement.threshold}");
             if (todayTaskCount >= achievement.threshold) {
               awarded = true;
             }
@@ -74,17 +93,25 @@ class AchievementRepositoryImpl implements AchievementRepository {
         }
         
         if (awarded) {
+          print("Нагороджено досягненням: ${achievement.title}");
+          
           await _userRepository.addAchievement(userId, achievement.id);
+          
           await _userRepository.addXp(userId, achievement.xpReward);
           
-          // Відображаємо сповіщення про отримання досягнення
           if (context.mounted) {
             NotificationService.showAchievementNotification(context, achievement);
+            NotificationService.showAchievementDialog(context, achievement);
           }
+        } else {
+          print(" Не виконано умову для досягнення");
         }
       }
     }
+  } catch (e) {
+    print("Помилка при перевірці досягнень: $e");
   }
+}
 
 @override
 Future<Achievement?> getAchievementById(String achievementId) {
