@@ -58,7 +58,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is Authenticated) {
-            context.go('/dashboard');
+             ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Реєстрація успішна!'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
+            );
+            Future.delayed(const Duration(microseconds: 300), () {
+              context.go('/dashboard');
+            });
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),

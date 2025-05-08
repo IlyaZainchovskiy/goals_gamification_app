@@ -123,7 +123,7 @@ void _showAddTaskDialog() {
                             },
                             onCheckboxChanged: (isChecked) {
                               if (isChecked && !task.isCompleted) {
-                                context.read<TasksBloc>().add(CompleteTask(task.id));
+                                context.read<TasksBloc>().add(CompleteTask(task.id,));
                               } else if (!isChecked && task.isCompleted) {
                                 // Uncomplete task
                                 final updatedTask = task.copyWith(isCompleted: false);
@@ -442,7 +442,6 @@ void _showAddGoalDialog() {
       
       setState(() {
         _availableGoals = goals;
-        // Якщо не вибрано ціль і є доступні, вибираємо першу
         if (_selectedGoalId.isEmpty && goals.isNotEmpty) {
           _selectedGoalId = goals.first.id;
         }
@@ -453,7 +452,6 @@ void _showAddGoalDialog() {
       setState(() {
         _isLoadingGoals = false;
       });
-      // Показуємо помилку
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не вдалося завантажити цілі: $e')),
       );
@@ -479,7 +477,6 @@ void _showAddGoalDialog() {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Вибір цілі
               if (_isLoadingGoals)
                 const Center(
                   child: Padding(
@@ -699,7 +696,6 @@ void _showAddGoalDialog() {
         final title = _titleController.text.trim();
         final description = _descriptionController.text.trim();
         
-        // Перевірка вибраної цілі
         if (_selectedGoalId.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Виберіть ціль для завдання')),
@@ -707,7 +703,6 @@ void _showAddGoalDialog() {
           return;
         }
         
-        // Combine date and time
         DateTime? finalDeadline;
         if (_deadline != null) {
           if (_deadlineTime != null) {
@@ -724,9 +719,8 @@ void _showAddGoalDialog() {
         }
         
         if (widget.taskToEdit == null) {
-          // Add new task
           final task = Task(
-            id: '', // порожній ID, Firebase згенерує його
+            id: '', 
             userId: widget.userId,
             goalId: _selectedGoalId,
             title: title,
@@ -740,7 +734,6 @@ void _showAddGoalDialog() {
           print('Додавання нового завдання: ${task.title} до цілі: $_selectedGoalId');
           context.read<TasksBloc>().add(AddTask(task));
         } else {
-          // Update existing task
           final updatedTask = widget.taskToEdit!.copyWith(
             title: title,
             description: description,

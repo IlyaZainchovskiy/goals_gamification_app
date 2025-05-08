@@ -15,14 +15,12 @@ class WelcomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Spacer(),
-              // Icon or Logo
               Icon(
                 Icons.check_circle_outline,
                 size: 100,
                 color: Theme.of(context).colorScheme.primary,
               ),
               const SizedBox(height: 32),
-              // Welcome Title
               Text(
                 'Цілі та Завдання',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -31,14 +29,12 @@ class WelcomeScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              // Welcome Description
               Text(
                 'Відстежуйте свої цілі, розбивайте їх на завдання і отримуйте винагороди за досягнення успіху',
                 style: Theme.of(context).textTheme.bodyLarge,
                 textAlign: TextAlign.center,
               ),
               const Spacer(),
-              // Login Button
               AuthButton(
                 text: 'Увійти',
                 onPressed: () => context.go('/login'),

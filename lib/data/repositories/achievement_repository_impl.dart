@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:goals_gamification_app/core/models/achievement.dart';
+import 'package:goals_gamification_app/core/services/notification_service.dart';
 import 'package:goals_gamification_app/data/datasources/firebase_datasource.dart';
 import 'package:goals_gamification_app/data/repositories/achievement_repository.dart';
 import 'package:goals_gamification_app/data/repositories/user_repository.dart';
@@ -20,7 +22,7 @@ class AchievementRepositoryImpl implements AchievementRepository {
   }
 
   @override
-  Future<void> checkAndAwardAchievements(String userId) async {
+  Future<void> checkAndAwardAchievements(String userId, BuildContext context) async {
     final user = await _datasource.getUser(userId);
     if (user == null) return;
     
@@ -74,6 +76,11 @@ class AchievementRepositoryImpl implements AchievementRepository {
         if (awarded) {
           await _userRepository.addAchievement(userId, achievement.id);
           await _userRepository.addXp(userId, achievement.xpReward);
+          
+          // Відображаємо сповіщення про отримання досягнення
+          if (context.mounted) {
+            NotificationService.showAchievementNotification(context, achievement);
+          }
         }
       }
     }

@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:goals_gamification_app/core/models/task.dart';
+import 'package:goals_gamification_app/data/repositories/achievement_repository.dart';
 import 'package:goals_gamification_app/data/repositories/goal_repository.dart';
 import 'package:goals_gamification_app/data/repositories/task_repository.dart';
 import 'package:goals_gamification_app/data/repositories/user_repository.dart';
@@ -10,8 +11,9 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final TaskRepository _taskRepository;
   final GoalRepository _goalRepository;
   final UserRepository _userRepository;
+  final AchievementRepository _achievementRepository;
 
-  TasksBloc({
+  TasksBloc(this._achievementRepository, {
     required TaskRepository taskRepository,
     required GoalRepository goalRepository,
     required UserRepository userRepository,
@@ -155,42 +157,49 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   Future<void> _onCompleteTask(
-    CompleteTask event,
-    Emitter<TasksState> emit,
-  ) async {
-    final currentState = state;
-    if (currentState is TasksLoaded) {
-      try {
-        final task = currentState.allTasks.firstWhere((t) => t.id == event.taskId);
+  CompleteTask event,
+  Emitter<TasksState> emit,
+) async {
+  final currentState = state;
+  if (currentState is TasksLoaded) {
+    try {
+      final task = currentState.allTasks.firstWhere((t) => t.id == event.taskId);
+      
+      await _taskRepository.completeTask(event.taskId);
+      
+      final taskIndex = currentState.allTasks.indexWhere((t) => t.id == event.taskId);
+      if (taskIndex != -1) {
+        final updatedTasks = List<Task>.from(currentState.allTasks);
+        updatedTasks[taskIndex] = updatedTasks[taskIndex].copyWith(isCompleted: true);
         
-        await _taskRepository.completeTask(event.taskId);
-        
-        final taskIndex = currentState.allTasks.indexWhere((t) => t.id == event.taskId);
-        if (taskIndex != -1) {
-          final updatedTasks = List<Task>.from(currentState.allTasks);
-          updatedTasks[taskIndex] = updatedTasks[taskIndex].copyWith(isCompleted: true);
-          
-          List<Task> filteredTasks = updatedTasks;
-          if (currentState.filterIsCompleted != null) {
-            filteredTasks = updatedTasks.where((task) => 
-                task.isCompleted == currentState.filterIsCompleted).toList();
-          }
-          
-          emit(TasksLoaded(
-            allTasks: updatedTasks,
-            filteredTasks: filteredTasks,
-            relatedGoal: currentState.relatedGoal,
-            filterIsCompleted: currentState.filterIsCompleted,
-          ));
-          
-          // Add XP for completing a task
-          await _userRepository.addXp(task.userId, 5);
+        List<Task> filteredTasks = updatedTasks;
+        if (currentState.filterIsCompleted != null) {
+          filteredTasks = updatedTasks.where((task) => 
+              task.isCompleted == currentState.filterIsCompleted).toList();
         }
-      } catch (e) {
-        emit(TasksError(e.toString()));
+        
+        emit(TasksLoaded(
+          allTasks: updatedTasks,
+          filteredTasks: filteredTasks,
+          relatedGoal: currentState.relatedGoal,
+          filterIsCompleted: currentState.filterIsCompleted,
+        ));
+        
+        await _userRepository.addXp(task.userId, 5, context: event.context);
+        
+        // Перевірка досягнення з передачею контексту
+        if (event.context != null) {
+          await _achievementRepository.checkAndAwardAchievements(
+            task.userId, 
+            event.context!,
+          );
+        }
       }
+    } catch (e) {
+      emit(TasksError(e.toString()));
     }
   }
+}
 
   void _onFilterTasksByStatus(
     FilterTasksByStatus event,
@@ -199,7 +208,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     final currentState = state;
     if (currentState is TasksLoaded) {
       if (event.isCompleted == null) {
-        // No filter, show all tasks
         emit(TasksLoaded(
           allTasks: currentState.allTasks,
           filteredTasks: currentState.allTasks,
@@ -207,7 +215,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
           filterIsCompleted: null,
         ));
       } else {
-        // Filter by completion status
         final filteredTasks = currentState.allTasks
             .where((task) => task.isCompleted == event.isCompleted)
             .toList();

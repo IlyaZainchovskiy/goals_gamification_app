@@ -82,7 +82,6 @@ class Task {
     );
   }
 
-  // Helper method to get color based on priority
   Color get priorityColor {
     switch (priority) {
       case TaskPriority.high:

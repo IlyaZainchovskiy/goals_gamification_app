@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:goals_gamification_app/core/models/task.dart';
 
 abstract class TasksEvent extends Equatable {
@@ -47,11 +48,12 @@ class DeleteTask extends TasksEvent {
 
 class CompleteTask extends TasksEvent {
   final String taskId;
+  final BuildContext? context;
 
-  const CompleteTask(this.taskId);
+  const CompleteTask(this.taskId, {this.context});
 
   @override
-  List<Object> get props => [taskId];
+  List<Object> get props => [taskId,];
 }
 
 class FilterTasksByStatus extends TasksEvent {

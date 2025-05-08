@@ -28,7 +28,6 @@ class FirebaseAuthService {
 
       final firebaseUser = credential.user;
       if (firebaseUser != null) {
-        // Створення модель користувача
         final newUser = UserModel(
           id: firebaseUser.uid,
           email: firebaseUser.email ?? email,
@@ -48,7 +47,7 @@ class FirebaseAuthService {
     }
   }
 
-  // Вхід користувача
+  // Вхід 
   Future<firebase_auth.UserCredential> signInWithEmailAndPassword(
     String email,
     String password,
@@ -64,7 +63,7 @@ class FirebaseAuthService {
     }
   }
 
-  // Вихід користувача
+  // Вихід 
   Future<void> signOut() async {
     try {
       await _auth.signOut();

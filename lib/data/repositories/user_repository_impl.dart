@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:goals_gamification_app/core/models/user.dart';
+import 'package:goals_gamification_app/core/services/notification_service.dart';
 import 'package:goals_gamification_app/data/datasources/firebase_datasource.dart';
 import 'package:goals_gamification_app/data/repositories/user_repository.dart';
 
@@ -23,16 +25,22 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
-  Future<void> addXp(String userId, int xp) async {
+  Future<void> addXp(String userId, int xp, {BuildContext? context}) async {
     final user = await _datasource.getUser(userId);
     if (user != null) {
       final newXp = user.xp + xp;
+      final oldLevel = user.level;
+      
       // Розрахунок нового рівня на основі XP
       final newLevel = calculateLevel(newXp);
       
       await _datasource.updateUser(
         user.copyWith(xp: newXp, level: newLevel),
       );
+      
+      if (newLevel > oldLevel && context != null && context.mounted) {
+        NotificationService.showLevelUpNotification(context, newLevel);
+      }
     }
   }
 

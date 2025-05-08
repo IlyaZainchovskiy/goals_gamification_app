@@ -27,7 +27,7 @@ class Goal {
   final GoalPriority priority;
   final GoalCategory category;
   final List<String> taskIds;
-  final int progress; // 0-100 percent
+  final int progress; 
 
   Goal({
     required this.id,
@@ -106,7 +106,6 @@ class Goal {
     );
   }
 
-  // Helper method to get color based on priority
   Color get priorityColor {
     switch (priority) {
       case GoalPriority.high:
@@ -118,7 +117,6 @@ class Goal {
     }
   }
 
-  // Helper method to get icon based on category
   IconData get categoryIcon {
     switch (category) {
       case GoalCategory.personal:
