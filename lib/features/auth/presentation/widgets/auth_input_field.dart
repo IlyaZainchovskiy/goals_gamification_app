@@ -10,7 +10,7 @@ class AuthInputField extends StatelessWidget {
   final Widget? suffixIcon;
 
   const AuthInputField({
-    Key? key,
+    super.key,
     required this.controller,
     required this.hintText,
     required this.labelText,
@@ -18,7 +18,7 @@ class AuthInputField extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.validator,
     this.suffixIcon,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

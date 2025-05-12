@@ -9,12 +9,12 @@ class TaskItem extends StatelessWidget {
   final VoidCallback? onDelete;
 
   const TaskItem({
-    Key? key,
+    super.key,
     required this.task,
     required this.onTap,
     required this.onCheckboxChanged,
     this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -7,10 +7,10 @@ class UpcomingTasks extends StatelessWidget {
   final Function(Task) onTaskTap;
 
   const UpcomingTasks({
-    Key? key,
+    super.key,
     required this.tasks,
     required this.onTaskTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -52,10 +52,10 @@ class TaskListItem extends StatelessWidget {
   final VoidCallback onTap;
 
   const TaskListItem({
-    Key? key,
+    super.key,
     required this.task,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

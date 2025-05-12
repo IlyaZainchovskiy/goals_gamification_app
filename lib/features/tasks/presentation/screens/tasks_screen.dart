@@ -11,15 +11,14 @@ import 'package:goals_gamification_app/features/tasks/presentation/bloc/tasks_bl
 import 'package:goals_gamification_app/features/tasks/presentation/bloc/tasks_event.dart';
 import 'package:goals_gamification_app/features/tasks/presentation/bloc/tasks_state.dart';
 import 'package:goals_gamification_app/features/tasks/widgets/task_item.dart';
-// import 'package:uuid/uuid.dart';
 
 class TasksScreen extends StatefulWidget {
   final String? goalId;
 
   const TasksScreen({
-    Key? key,
+    super.key,
     this.goalId,
-  }) : super(key: key);
+  });
 
   @override
   _TasksScreenState createState() => _TasksScreenState();
@@ -46,15 +45,13 @@ void _showAddTaskDialog() {
   final authState = context.read<AuthBloc>().state;
   
   if (authState is Authenticated) {
-    // Передаємо порожній рядок як goalId, щоб показати вибір цілі у діалозі
     showDialog(
       context: context,
       builder: (_) => AddTaskDialog(
         userId: authState.user.id,
-        goalId: widget.goalId ?? '', // Може бути null, тоді порожній рядок
+        goalId: widget.goalId ?? '', 
       ),
     ).then((_) {
-      // Даємо Firebase час на оновлення
       Future.delayed(const Duration(milliseconds: 500), () {
         _loadTasks();
       });
@@ -356,15 +353,15 @@ void _showAddTaskDialog() {
 
 class AddTaskDialog extends StatefulWidget {
   final String userId;
-  final String goalId; // Може бути порожнім, тоді потрібен вибір
+  final String goalId; 
   final Task? taskToEdit;
 
   const AddTaskDialog({
-    Key? key,
+    super.key,
     required this.userId,
     required this.goalId,
     this.taskToEdit,
-  }) : super(key: key);
+  });
 
   @override
   _AddTaskDialogState createState() => _AddTaskDialogState();
@@ -379,7 +376,6 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   TimeOfDay? _deadlineTime;
   TaskPriority _priority = TaskPriority.medium;
   
-  // Додаємо змінні для вибору цілі
   String _selectedGoalId = '';
   List<Goal> _availableGoals = [];
   bool _isLoadingGoals = true;
@@ -387,7 +383,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
   @override
   void initState() {
     super.initState();
-    _selectedGoalId = widget.goalId; // Початкове значення
+    _selectedGoalId = widget.goalId; 
     
     if (widget.taskToEdit != null) {
       _titleController.text = widget.taskToEdit!.title;
@@ -405,19 +401,18 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
       _selectedGoalId = widget.taskToEdit!.goalId;
     }
     
-    // Завантажуємо цілі користувача
+  
     _loadUserGoals();
   }
-  // Метод для швидкого додавання цілі
+
 void _showAddGoalDialog() {
-  Navigator.of(context).pop(); // Закриваємо поточний діалог
+  Navigator.of(context).pop(); 
   
-  // Відкриваємо діалог створення цілі (потрібно імпортувати клас AddGoalDialog)
   showDialog(
     context: context,
     builder: (context) => AddGoalDialog(userId: widget.userId),
   ).then((_) {
-    // Після створення цілі, знову відкриваємо діалог додавання завдання
+  
     Future.delayed(const Duration(milliseconds: 300), () {
       showDialog(
         context: context,
@@ -430,7 +425,6 @@ void _showAddGoalDialog() {
   });
 }
 
-  // Метод для завантаження цілей користувача
   Future<void> _loadUserGoals() async {
     setState(() {
       _isLoadingGoals = true;

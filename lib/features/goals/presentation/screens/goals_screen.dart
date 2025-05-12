@@ -12,7 +12,7 @@ import 'package:goals_gamification_app/features/goals/widgets/goal_item.dart';
 import 'package:uuid/uuid.dart';
 
 class GoalsScreen extends StatefulWidget {
-  const GoalsScreen({Key? key}) : super(key: key);
+  const GoalsScreen({super.key});
 
   @override
   _GoalsScreenState createState() => _GoalsScreenState();
@@ -215,7 +215,7 @@ void _loadGoals() {
 }
 
 class FilterDialog extends StatelessWidget {
-  const FilterDialog({Key? key}) : super(key: key);
+  const FilterDialog({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -294,10 +294,10 @@ class AddGoalDialog extends StatefulWidget {
   final Goal? goalToEdit;
 
   const AddGoalDialog({
-    Key? key,
+    super.key,
     required this.userId,
     this.goalToEdit,
-  }) : super(key: key);
+  });
 
   @override
   _AddGoalDialogState createState() => _AddGoalDialogState();

@@ -215,7 +215,7 @@ Future<void> addAchievementToUser(String userId, String achievementId) async {
     }
   } catch (e) {
     print("Firebase: помилка при додаванні досягнення: $e");
-    throw e;
+    rethrow;
   }
 }
 }

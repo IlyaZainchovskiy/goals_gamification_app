@@ -10,12 +10,12 @@ class GoalItem extends StatelessWidget {
   final VoidCallback? onDelete;
 
   const GoalItem({
-    Key? key,
+    super.key,
     required this.goal,
     required this.onTap,
     this.onComplete,
     this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

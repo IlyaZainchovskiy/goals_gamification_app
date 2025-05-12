@@ -10,7 +10,7 @@ import 'package:goals_gamification_app/features/auth/presentation/widgets/auth_i
 
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();

@@ -9,7 +9,7 @@ import 'package:goals_gamification_app/features/goals/presentation/bloc/goals_st
 import 'package:goals_gamification_app/features/goals/widgets/goal_item.dart';
 
 class CompletedGoalsScreen extends StatefulWidget {
-  const CompletedGoalsScreen({Key? key}) : super(key: key);
+  const CompletedGoalsScreen({super.key});
 
   @override
   _CompletedGoalsScreenState createState() => _CompletedGoalsScreenState();

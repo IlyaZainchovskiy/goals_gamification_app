@@ -9,7 +9,7 @@ import 'package:goals_gamification_app/features/auth/presentation/screens/bloc/a
 import 'package:percent_indicator/linear_percent_indicator.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
@@ -246,10 +246,10 @@ class AchievementCard extends StatelessWidget {
   final bool isUnlocked;
 
   const AchievementCard({
-    Key? key,
+    super.key,
     required this.achievement,
     required this.isUnlocked,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

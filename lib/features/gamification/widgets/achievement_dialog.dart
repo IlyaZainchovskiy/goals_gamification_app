@@ -5,9 +5,9 @@ class AchievementDialog extends StatelessWidget {
   final Achievement achievement;
 
   const AchievementDialog({
-    Key? key,
+    super.key,
     required this.achievement,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

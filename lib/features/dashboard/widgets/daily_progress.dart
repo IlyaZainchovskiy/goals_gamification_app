@@ -8,12 +8,12 @@ class DailyProgress extends StatelessWidget {
   final int level;
 
   const DailyProgress({
-    Key? key,
+    super.key,
     required this.completedTasks,
     required this.totalTasks,
     required this.xp,
     required this.level,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
