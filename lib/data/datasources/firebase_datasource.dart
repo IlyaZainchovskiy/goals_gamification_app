@@ -184,7 +184,6 @@ Future<void> addAchievementToUser(String userId, String achievementId) async {
   try {
     print("Firebase: додаємо досягнення $achievementId користувачу $userId");
     
-    // Спочатку отримуємо поточний список досягнень
     final docSnapshot = await _firestore.collection('users').doc(userId).get();
     
     if (docSnapshot.exists) {
@@ -194,16 +193,13 @@ Future<void> addAchievementToUser(String userId, String achievementId) async {
         currentAchievements = List<String>.from(docSnapshot.data()!['achievements']);
       }
       
-      // Перевірка, чи вже є це досягнення
       if (currentAchievements.contains(achievementId)) {
         print("Firebase: досягнення вже існує у списку");
         return;
       }
       
-      // Додаємо нове досягнення
       currentAchievements.add(achievementId);
       
-      // Оновлюємо документ з новим списком замість використання arrayUnion
       await _firestore.collection('users').doc(userId).update({
         'achievements': currentAchievements
       });

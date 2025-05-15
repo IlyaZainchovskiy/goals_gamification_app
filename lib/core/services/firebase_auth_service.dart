@@ -8,7 +8,7 @@ class FirebaseAuthService {
 
   FirebaseAuthService(this._userRepository);
 
-  // Отримати поточного користувача
+  // Отримання поточного користувача
   firebase_auth.User? get currentUser => _auth.currentUser;
 
   // Прослуховування змін стану авторизації

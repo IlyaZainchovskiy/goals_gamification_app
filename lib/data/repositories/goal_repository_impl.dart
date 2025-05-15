@@ -44,12 +44,9 @@ class GoalRepositoryImpl implements GoalRepository {
           .isAtSameMomentAs(today)
     ).length;
   }
-  
-  // Додати логування для відлагодження
   print('Загальна кількість виконаних завдань: $taskCount');
   print('Кількість виконаних завдань сьогодні: $todayTaskCount');
   
-  // Перевірка досягнень
   for (final achievement in Achievement.predefinedAchievements) {
     if (!userAchievements.contains(achievement.id)) {
       bool awarded = false;
@@ -80,7 +77,6 @@ class GoalRepositoryImpl implements GoalRepository {
         await _userRepository.addAchievement(userId, achievement.id);
         await _userRepository.addXp(userId, achievement.xpReward);
         
-        // Відображаємо сповіщення
         if (context.mounted) {
           NotificationService.showAchievementNotification(context, achievement);
         }

@@ -27,7 +27,12 @@ Future<void> _onLoadGoals(
   emit(GoalsLoading());
   try {
     final goals = await _goalRepository.getAllGoalsByUser(event.userId);
-    emit(GoalsLoaded(allGoals: goals, filteredGoals: goals));
+    final filteredGoals = goals.where((goal) => !goal.isCompleted).toList();
+    emit(GoalsLoaded(
+      allGoals: goals, 
+      filteredGoals: filteredGoals,
+      filterIsCompleted: false  
+    ));
   } catch (e) {
     emit(GoalsError(e.toString()));
   }
