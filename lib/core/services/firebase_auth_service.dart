@@ -8,13 +8,10 @@ class FirebaseAuthService {
 
   FirebaseAuthService(this._userRepository);
 
-  // Отримання поточного користувача
   firebase_auth.User? get currentUser => _auth.currentUser;
 
-  // Прослуховування змін стану авторизації
   Stream<firebase_auth.User?> get authStateChanges => _auth.authStateChanges();
 
-  // Реєстрація нового користувача
   Future<firebase_auth.UserCredential> registerWithEmailAndPassword(
     String email,
     String password,
@@ -47,7 +44,7 @@ class FirebaseAuthService {
     }
   }
 
-  // Вхід 
+
   Future<firebase_auth.UserCredential> signInWithEmailAndPassword(
     String email,
     String password,
@@ -63,7 +60,7 @@ class FirebaseAuthService {
     }
   }
 
-  // Вихід 
+
   Future<void> signOut() async {
     try {
       await _auth.signOut();
@@ -73,7 +70,6 @@ class FirebaseAuthService {
     }
   }
 
-  // Скидання паролю
   Future<void> resetPassword(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
